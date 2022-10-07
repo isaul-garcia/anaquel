@@ -11,6 +11,8 @@
     "react-icons": "^4.3.1",
     "react-router-dom": "^6.0.2",
     "react-scripts": "4.0.3",
+    "react-sortablejs": "^6.0.3",
+    "sortablejs": "^1.14.0",
     "styled-components": "^5.3.3",
     "web-vitals": "^1.1.2",
     "webfontloader": "^1.6.28"
@@ -38,5 +40,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@types/sortablejs": "^1.10.7"
   }
 }

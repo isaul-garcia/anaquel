@@ -1,10 +1,13 @@
-import React from 'react';
-import { Dashboard } from '../../components';
+import React, { useState } from 'react';
+import { Tray, Expand, Footer } from '../../components';
 
-const Home = (click) => {
+const Home = () => {
+    const [expand, setExpand] = useState(true);
     return (
         <>
-            <Dashboard click={click} />
+            <Tray expand={expand} />
+            <Expand expand={expand} setExpand={setExpand}/>
+            <Footer />
         </>
     )
 }

@@ -1,70 +1,56 @@
 import styled from 'styled-components'
+import { ReactSortable } from "react-sortablejs";
 
-export const BookmarksContainer = styled.div`
-    width: 76.80%;
-    height: 100vh;
-    position: absolute;
-    right: 0;
-    z-index: 99906;
-    
-    @media screen and (max-width: 1500px) { 
-        width: 75.25%;
-        padding-right: 1px;
-    }
-
-    @media screen and (max-width: 960px) {
-        width: 100%;
-    }
-`
-
-export const BookmarksWrapper = styled.div`
+export const BookmarksTrayContainer = styled.div`
     width: 100%;
     height: 100%;
+    padding-right: 2px;
+    position: absolute;
     background-color: #111;
+    overflow: hidden;
+    right: 0;
+    top: 0;
+`
+
+export const BookmarksTrayWrapper = styled.div`
+    width: 100%;
+    height: 100%;
     overflow: scroll;
     overflow-x: hidden;
-`
+    user-select: none;    
+    overflow-y: ${({ expand }) => (expand ? 'overlay' : 'hidden')};
 
-export const TopBar = styled.div`
-    width: 35%;
-    height: 48px;
-    border-bottom: 1px solid #555;
-    border-right: 1px solid #555;
-    padding: 1em;
-    position: sticky;
-    top: 0;
-    background-color: #111;
-    z-index: 999;
-    
-    @media screen and (max-width: 1500px) { 
-        width: 50%;
+    /* width */
+    &::-webkit-scrollbar {
+        width: 6px;    
+        cursor: pointer;
     }
 
-    @media screen and (max-width: 960px) {
-        width: 100%;
+    /* width */
+    &::-webkit-scrollbar:hover {
+        width: 16px;
     }
-`
 
-export const SelectedDescription = styled.div`
-    margin-left: 63px;
-`
-
-export const Title = styled.div`
-    font-size: 22px;
-    line-height: 22px;
-    color: #bbb;
-    
-    @media screen and (max-width: 1500px) { 
-        font-size: 18px;
+    /* Track */
+    &::-webkit-scrollbar-track {
+        margin: 20px;
+        margin-top: 4.25em;
+        border-radius: 20px;
+        cursor: pointer;
     }
-`
-
-export const Description = styled.div`
-    font-size: 18px;
-    color: #777;
     
-    @media screen and (max-width: 1500px) { 
-        font-size: 16px;
+    /* Handle */
+    &::-webkit-scrollbar-thumb {
+        background: #555; 
+        border-radius: 20px;
+        cursor: pointer;
+    }
+
+    /* Handle on hover */
+    &::-webkit-scrollbar-thumb:hover {
+        background: #333;   
+        cursor: pointer;
+        width: 10px;
     }
 `
 
@@ -74,216 +60,161 @@ export const Notice = styled.div`
     color: #9a9a9a;
 `
 
-export const DashboardContent = styled.div`
-    width: 100%;
-    height: 100%;
+
+export const TrayName = styled.div`
+    font-size: 18px;
+    width: 47.6vw;
+    line-height: 24px;
+    padding: 0.9em 1.5em 1.25vw 1.5em;
+    border-radius: 0 1.25rem 0 0;
+    color: #9a9a9a;
+    border-bottom: 1px solid #2d2d31;
+    background-color: #111111dd;
+    position: fixed;
+    z-index: 3;
+    pointer-events: none;
+    transition: 0.2s;
+    margin-top: ${({ expand }) => (expand ? '0' : '-70px')};
 `
 
 //Folders UI
 //Folders UI
+//Folders UI
+//Folders UI
+//Folders UI
 
-export const WebsiteCardsContainer = styled.div`
-    display: grid;
-    margin: 1.8rem;
-    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-    grid-gap: 2rem;
-    
-    @media screen and (max-width: 1500px) { 
-        grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-    }
-
-    @media screen and (max-width: 960px) {
-        grid-gap: 0.25rem;
-        grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    }
+export const customReactSortable = styled(ReactSortable)`
+    margin: 1.5vw;
 `
 
 export const WebsiteCard = styled.div`
-    height: 230px;
+    height: 9rem;
+    width: 6.5rem;
+    margin: 1vw;
     display: inline-block;
     
-    @media screen and (max-width: 960px) {
-        height: 115px;
+    @media screen and (max-width: 1500px) { 
+        height: 6.5rem;
+        width: 4.8rem;
     }
+`
+
+export const WebsiteApp = styled.div`
+    height: 6.5rem;
+    padding-left: 0.9rem;
+    border-radius: 20px;
+    background-color: #222;
+    /* outline: 5px solid #111;
+    outline-offset: -4px;
+    margin-left: -4px; */
+`
+
+
+export const WebsiteContainer = styled.div`
+    width: 100%;
+    height: 6.5rem;
+    display: inline-block;
+    cursor: pointer;
+    position: relative;
+    outline: 4px solid #111;
+    border-radius: 20px;
+
+    @media screen and (max-width: 1500px) { 
+        height: 4.8rem;
+    }
+`
+
+export const NameContainer = styled.div`
+    height: 30px;
+    width: 100%;
+    overflow: hidden;
+`
+
+export const NameWrapper = styled.div`
+    height: 30px;
+    width: 100vw;
 `
 
 export const Name = styled.h5`
     color: #888;
     font-size: 14px;
+    line-height: 26px;
     margin-top: 0px;
-    padding: 0px 16px;
-    cursor: default;
+    cursor: pointer;
     font-weight: 300;
+    display: inline-block;
+    vertical-align: top;
+    user-select: text;
 `
 
-export const WebsiteContainer = styled.div`
-    width: 100%;
-    height: 200px;
-    border-radius: 20px;
-    background-color: #111;
-    border: 1px solid #555;
-    overflow: hidden;
+export const IPFS = styled.div`
+    width: 4px;
+    height: 4px;
+    padding: 3px;
+    margin-right: 4px;
+    margin-left: 1px;
     display: inline-block;
-    cursor: pointer;
-    transition: 0.1s;
+    vertical-align: middle;
+    border-radius: 10px;
+    z-index: 2;
+    display: ${({ isIPFS }) => (isIPFS ? '' : 'none')};
+    outline: ${({ isPinned }) => (isPinned ? '4px solid #69c4cd' : '1px solid #69c4cd')};
+    outline-offset: ${({ isPinned }) => (isPinned ? '-4px' : '-1px solid #69c4cd')};
+`
 
-    &:hover {
-        border: 1px solid #555;
-        outline: 4px solid #555;
-    }
-
-    @media screen and (max-width: 960px) {
-        height: 100px;
-
-        &:hover {
-            outline: 0px solid #bbb;
-            border: 1px solid #eee;
-        }
-    }
+export const Pinned = styled.span`
+    font-size: 8px;
+    height: 18px;
+    padding: 2px 4px;
+    margin-right: 2px;
+    background-color: #242f40;
+    border-radius: 12px;
+    z-index: 2;
+    display: ${({ isIPFS }) => (isIPFS ? '' : 'none')};
 `
 
 export const WebsiteWrapper = styled.div`
     width: 100%;
     height: 100%;
+    background-color: #333;
     position: relative;
-`
+    overflow: hidden;
+    border-radius: 20px;
+    border: 2px solid #8880;
+  
+  ${WebsiteCard}:hover & {
+    background-color: #222;
+    border: 2px solid #888;
+  }
 
-export const FaviconWrapper = styled.img`
-    width: 30px;
-    height: 30px;
-    padding: 5px;
-    margin: 6px;
-    object-fit: cover;
-    object-position: left;
-    border: 1px solid #eee;
-    position: absolute;
-    background-color: #f0f0f0;
-    border-radius: 12px;
-    z-index: 99999999;
-`
-
-export const FolderIconContainer = styled.div`
-    width: 36px;
-    height: 36px;
-    padding: 5px;
-    margin-top: -1px;
-    object-fit: cover;
-    object-position: left;
-    border: 1px solid #555;
-    position: absolute;
-    background-color: #89ee46;
-    border-radius: 12px;
-`
-
-export const FolderIconWrapper = styled.div`
-    margin: 3px;
-    padding-left: px;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-    vertical-align: center;
+  ${WebsiteCard}:active & {
+    border: 2px solid #028ef7;
+  }
 `
 
 export const WebsiteImage = styled.img`
-    height: 200px;
+    height: 100%;
+    overflow: hidden;
     object-fit: cover;
-    object-position: left; 
-    transition: 0.2s;
+    object-position: center; 
     opacity: 0.9;
-  
-    
-    ${WebsiteContainer}:hover & {
-        height: 210px;
-    }
-
-    @media screen and (max-width: 960px) {
-        height: 140px;  
-        
-        ${WebsiteContainer}:hover & {
-            height: 140px;
-        }
-    }
+    padding: 4px;
+    border-radius: 1.15em;
 `
 
-////Search
-////Search
-
-export const SearchBar = styled.form`
-    bottom: 0;
-    width: 35%;
-    height: 62px;
-    position: absolute;
-    border-top: 1px solid #555;
-    background-color: #111;
-    border-right: 1px solid #555;
-    overflow: hidden;
-
-    @media screen and (max-width: 1500px) { 
-        width: 40%;
-        height: 54px;
-    }
-
-    @media screen and (max-width: 960px) {
-        width: 100%;
-    }
-`;
-
-export const SearchInput = styled.input`
-    padding: 11px 0px 11px 10px;
-    margin-top: 10px;
-    font-size: 18px;
-    outline: none;
-    border: none;
-    width: 84%;
-    display: inline-block;
-    background-color: #111;
-    transition: all 0.2s ease-in-out;
-    color: #000;
-    position: absolute;
-
-    &::-webkit-search-cancel-button,
-    &::-webkit-search-decoration {
-    -webkit-appearance: none;
-    appearance: none;
-    }
-
-    &::placeholder {
-        color: #555;
-    }
-    
-    @media screen and (max-width: 1500px) { 
-        margin-top: 5px;
-    }
-`;
-
-export const SearchButton = styled.div`
-    height: 42px;
-    width: 36px;
-    padding: 18px 0px 8px 12px;
-    background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.5);
-    font-size: 1.2rem;
-    outline: none;
-    border: none;
-    transition: all 0.2s ease-in-out;
-    display: inline-block;
-    border-right: 1px solid #555;
-    cursor: pointer;
-
-    &:hover {
-        opacity: 0.5;
-    }
-
-    @media screen and (max-width: 1500px) { 
-        height: 43px;
-        padding: 14px 0px 8px 12px;
-    }
-`;
-
-export const SpacerMedium = styled.div`
+export const SpacerXSmall = styled.div`
     display: block;
     bottom: 0;
-    height: 120px;
+    height: 3.8em;
     width: 100%;
+    transition: 0.2s;
+    height: ${({ expand }) => (expand ? '3.8em' : '0')};
+`
+
+export const Separator = styled.div`
+    display: block;
+    bottom: 0;
+    height: 0;
+    width: 100%;
+    border-bottom: 1px #555 solid;
 `

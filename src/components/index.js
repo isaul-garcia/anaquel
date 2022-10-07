@@ -1,6 +1,6 @@
-
-export { default as Navbar } from './Navbar/Navbar';
-export { default as SideNavbar } from './SideNavbar/SideNavbar';
-export { default as Dashboard } from './Dashboard/Dashboard';
-export { default as SideBar } from './SideBar/SideBar';
 export { default as Bookmarks } from './Bookmarks/Bookmarks';
+export { default as Tray } from './Tray/Tray';
+export { default as Expand } from './Expand/Expand';
+export { default as Footer } from './Footer/Footer';
+export { default as Folders } from './Folders/Folders';
+export { default as SideButtons } from './SideButtons/SideButtons';

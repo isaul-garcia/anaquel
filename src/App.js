@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import './App.css';
+import GlobalStyle from './globalStyles';
 import WebFont from 'webfontloader';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Home } from './pages';
-import { SideNavbar } from './components'
 
 function App() {
   useEffect(() => {
@@ -14,11 +13,11 @@ function App() {
     });
   }, []);
 
-  const [click, setClick] = useState(false);
+  const [click] = useState(false);
 
   return (
     <Router>
-      <SideNavbar click={click} setClick={setClick} />
+      <GlobalStyle />
       <Routes>
         <Route path="/" element={<Home click={click} />} />
       </Routes>
