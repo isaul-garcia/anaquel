@@ -100,7 +100,7 @@ export const WebsiteCard = styled.div`
 `
 
 export const WebsiteApp = styled.div`
-    height: 6.5rem;
+height: 72.5%;
     padding-left: 0.9rem;
     border-radius: 20px;
     background-color: #222;
