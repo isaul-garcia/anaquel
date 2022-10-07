@@ -3,7 +3,7 @@ import styled from 'styled-components'
 export const Container = styled.div`
     transition: 0.2s;
     margin-left: ${({expand}) => (expand ? '16vw' : '26.2vw')};
-    margin-top: ${({expand}) => (expand ? '10.5vh' : '18vh')};
+    margin-top: ${({expand}) => (expand ? '10.5vh' : '20vh')};
     width: ${({expand}) => (expand ? '68vw' : '47.6vw')};
     height: ${({expand}) => (expand ? '78.5vh' : '58vh')};
     position: absolute;

@@ -2,7 +2,7 @@ import styled from 'styled-components'
 
 export const ExpandContainer = styled.div`
     width: 100%;
-    height: ${({expand}) => (expand ? '7.5vh' : '21vh')};
+    height: ${({expand}) => (expand ? '7.5vh' : '20vh')};
     transition: 0.2s;
     position: absolute;
     bottom: 0;
