@@ -1,47 +1,14 @@
 {
-  "name": "paguineo",
-  "version": "0.1.0",
+  "name": "anaquel",
+  "version": "1.0.13",
   "private": true,
-  "dependencies": {
-    "@testing-library/jest-dom": "^5.15.0",
-    "@testing-library/react": "^11.2.7",
-    "@testing-library/user-event": "^12.8.3",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-icons": "^4.3.1",
-    "react-router-dom": "^6.0.2",
-    "react-scripts": "4.0.3",
-    "react-sortablejs": "^6.0.3",
-    "sortablejs": "^1.14.0",
-    "styled-components": "^5.3.3",
-    "web-vitals": "^1.1.2",
-    "webfontloader": "^1.6.28"
-  },
+  "type": "module",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "test": "node --test tests/*.test.js",
+    "preview": "python3 -m http.server 4173 --bind 127.0.0.1",
+    "test:browser": "playwright test"
   },
   "devDependencies": {
-    "@types/sortablejs": "^1.10.7"
+    "@playwright/test": "^1.63.0"
   }
 }

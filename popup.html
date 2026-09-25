@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Site bookmarks</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="site-bookmarks" aria-labelledby="popup-title">
+      <header class="popup-header">
+        <div id="site-favicon" class="brand-mark" aria-hidden="true"><span>A</span></div>
+        <div class="heading">
+          <p class="eyebrow">Bookmarks for this site</p>
+          <h1 id="popup-title">Loading…</h1>
+        </div>
+        <span id="bookmark-count" class="bookmark-count" hidden></span>
+      </header>
+
+      <section id="bookmark-list" class="bookmark-list" aria-live="polite" aria-label="Bookmarks on this site"></section>
+
+      <p id="popup-notice" class="popup-notice" role="status" hidden></p>
+
+      <footer class="popup-footer">
+        <button id="open-pinned" class="open-pinned" type="button" title="Open Anaquel" aria-label="Open Anaquel pinned bookmarks">
+          <img src="icons/anaquel-logo.svg" alt="">
+        </button>
+        <button id="open-manager" class="open-manager" type="button">
+          <span>Manage bookmarks</span>
+          <span class="arrow" aria-hidden="true">→</span>
+        </button>
+      </footer>
+    </main>
+
+    <dialog id="delete-dialog" class="delete-dialog">
+      <form id="delete-form">
+        <h2>Delete this bookmark?</h2>
+        <p id="delete-description"></p>
+        <p id="delete-error" class="delete-error" role="alert"></p>
+        <div class="dialog-actions">
+          <button id="cancel-delete" class="dialog-cancel" type="button">Cancel</button>
+          <button id="confirm-delete" class="dialog-delete" type="submit">Delete</button>
+        </div>
+      </form>
+    </dialog>
+    <script type="module" src="src/popup.js"></script>
+  </body>
+</html>

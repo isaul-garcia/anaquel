@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Anaquel</title>
+  <link rel="icon" type="image/png" href="icons/icon32.png">
+  <link rel="stylesheet" href="src/styles.css">
+  <script type="module" src="src/app.js"></script>
+<style>.dialog-heading .close-dialog{margin-left:auto}#editor .dialog-heading{height:0;position:relative;z-index:1}#editor .dialog-heading .close-dialog{position:absolute;top:0;right:0}#editor h2{margin-top:0}</style>
+</head>
+<body>
+  <header class="masthead">
+    <a class="brand" href="#all" aria-label="Anaquel home"><img class="brand-logo" src="icons/anaquel-appicon.svg" alt="" width="40" height="40"><span>Anaquel</span></a>
+    <span class="brand-divider" aria-hidden="true"></span>
+    <span class="brand-subtitle">Bookmarks Manager</span>
+  </header>
+  <main class="workspace">
+    <nav class="rail rail-left" aria-label="Folder tools">
+      <button class="round" id="add-folder" title="New main folder" aria-label="New main folder" data-icon="plus"></button>
+      <button class="round" id="folder-filter" title="Filter folders" aria-label="Filter folders" aria-expanded="false" data-icon="filter"></button>
+      <span class="rail-divider"></span>
+      <button class="round" id="settings" title="Settings" aria-label="Settings" data-icon="settings"></button>
+    </nav>
+    <section class="shelf" aria-label="Bookmark manager">
+      <aside class="sidebar">
+        <div class="sidebar-top"><span class="eyebrow">Folders</span><span id="collection-count" class="small-count">0</span></div>
+        <div class="search-field"><span data-icon="search"></span><input id="search" type="search" placeholder="Search bookmarks…" aria-label="Search bookmarks"><button id="search-mode" class="search-mode" type="button" aria-label="Search Bookmarks" aria-pressed="false"><span class="search-mode-track" aria-hidden="true"><span class="search-mode-knob"><span class="search-mode-icon search-mode-app" data-icon="app"></span><span class="search-mode-icon search-mode-folder" data-icon="folder"></span></span></span></button></div>
+        <div id="folder-filters" class="folder-filters" hidden><label>Sort<select id="folder-sort"><option value="manual">User order</option><option value="az">Name, A–Z</option><option value="count">Most bookmarks</option><option value="count-asc">Fewest bookmarks</option></select></label></div>
+        <div id="collections" class="collections" aria-label="Bookmark folders"></div>
+        <div class="sidebar-bottom"><span data-icon="bookmark"></span><span id="total-count">Loading your bookmarks…</span></div>
+      </aside>
+      <section class="content" aria-label="Folder contents">
+        <header class="content-header"><div><nav id="breadcrumbs" aria-label="Breadcrumb"></nav><div id="view-description" class="view-description"></div></div><div class="header-actions"><span id="item-count" class="count-badge"></span><button id="open-selected" class="primary open-selected" hidden>Open all selected</button><button id="cancel-selection" class="secondary cancel-selection" hidden>Cancel selection</button></div></header>
+        <div id="content-filters" class="content-filters" hidden>
+          <label>Show<select id="type-filter"><option value="all">Everything</option><option value="bookmarks">Bookmarks</option><option value="folders">Folders</option><option value="pinned">Pinned only</option></select></label>
+          <label>Sort<select id="sort-filter"><option value="manual">My order</option><option value="az">Name, A–Z</option><option value="recent">Recently added</option></select></label>
+          <button id="reset-filters" class="text-button">Reset</button>
+        </div>
+        <div id="batch-tools" class="batch-tools" hidden><button id="select-visible" class="secondary" hidden>Select all in view</button><button id="delete-selected" class="danger" hidden disabled>Delete selected (0)</button><button id="done" class="done" hidden>Done <span>✓</span></button></div><div id="grid-scroll" class="grid-scroll"><div id="grid" class="bookmark-grid"></div><div id="empty" class="empty" hidden><span data-icon="bookmark"></span><h2 id="empty-title">This folder is empty</h2><p id="empty-description">Add a bookmark or folder to fill up this space.</p><button id="empty-add" class="primary">Add something</button></div></div>
+        <footer class="content-footer"><span class="footer-tip"><span data-icon="pin"></span> Pin a favorite.</span></footer>
+      </section>
+    </section>
+    <nav class="rail rail-right" aria-label="Bookmark tools">
+      <button class="round" id="add-item" title="Add bookmark or folder" aria-label="Add bookmark or folder" data-icon="plus"></button>
+      <button class="round" id="item-filter" title="Filter this view" aria-label="Filter this view" aria-expanded="false" data-icon="filter"></button>
+      <span class="rail-divider"></span>
+      <button class="round" id="edit-mode" title="Organize bookmarks" aria-label="Organize bookmarks" aria-pressed="false" data-icon="edit"></button>
+    </nav>
+  </main>
+  <footer class="page-footer"><button id="collapse" class="collapse" aria-expanded="true"><span data-icon="panel"></span><span>Hide folders</span></button><span>Anaquel <span class="version">/ 1.0.13</span><span id="demo-status" hidden> · Demo workspace</span></span></footer>
+  <dialog id="editor"><form id="editor-form"><div class="dialog-heading"><button type="button" class="icon-button close-dialog" aria-label="Close" data-icon="close"></button></div><div class="editor-title-row"><span id="editor-icon" aria-hidden="true" hidden></span><h2 id="editor-title">Add new bookmark</h2></div><div id="create-tabs" class="segmented"><button type="button" data-create-type="bookmark" class="selected">Bookmark</button><button type="button" data-create-type="folder">Folder</button></div><label>Name<input id="item-title" required maxlength="500" placeholder="Give it a name" autocomplete="off"></label><fieldset id="folder-appearance" class="folder-appearance" hidden><legend>Folder color</legend><div class="folder-color-row"><span id="folder-initial-preview" class="mini-icon folder-initial folder-initial-preview" aria-hidden="true">?</span><div id="folder-color-swatches" class="folder-color-swatches" role="group" aria-label="Folder colors"></div></div><label class="custom-folder-color">Custom color<input id="folder-color" type="color" value="#72a7ff" aria-label="Custom folder color"></label></fieldset><label id="url-field">Website address<input id="item-url" placeholder="https://example.com" autocomplete="off"></label><label>Save in<select id="item-parent"></select></label><p id="editor-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="danger" id="editor-delete" hidden>Delete bookmark</button><button type="button" class="secondary close-dialog">Cancel</button><button type="submit" class="primary" id="save-item">Add bookmark</button></div></form></dialog>
+  <dialog id="delete-dialog"><form id="delete-form"><div class="dialog-heading"><span class="eyebrow">A LITTLE SPRING CLEANING</span><button type="button" class="icon-button close-dialog" aria-label="Close" data-icon="close"></button></div><h2 id="delete-title">Remove this bookmark?</h2><p id="delete-description"></p><p id="delete-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary close-dialog">Keep it</button><button type="submit" class="danger" id="confirm-delete">Delete</button></div></form></dialog>
+  <dialog id="settings-dialog"><div class="dialog-heading"><button class="icon-button close-dialog" aria-label="Close" data-icon="close"></button></div><label>Appearance<select id="theme-setting"><option value="dark">Dark</option><option value="light">Light</option></select></label><label>Icon size and view<select id="size-setting"><option value="compact">Small</option><option value="comfortable">Medium</option><option value="spacious">Large</option><option value="list">List</option></select></label><label>Folder layout<select id="folder-view-setting"><option value="list">List</option><option value="tiles">Tiles</option></select></label><label class="setting-switch"><span>Open bookmarks in a new tab<small>Keep your folders close by.</small></span><input type="checkbox" id="newtab-setting" role="switch"></label><div class="settings-note"><span data-icon="lock"></span><p>Your bookmarks stay in your browser. Pins and preferences are saved on this device. No accounts, no tracking.</p></div><div class="dialog-actions"><button class="primary close-dialog">All set</button></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

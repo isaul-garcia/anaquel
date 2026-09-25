@@ -1,0 +1,5 @@
+- get on github
+- verify chromestore upload requirements
+- upload to chromestore
+
+- be able to change parent folder location
