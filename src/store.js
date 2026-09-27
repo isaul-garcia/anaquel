@@ -42,11 +42,13 @@ export const store = {
   },
   async create(details) {
     if (isExtension) return chrome.bookmarks.create(details);
-    const map = indexTree(demo.tree), parent = map.get(details.parentId);
+    const { parentId, index, ...nodeDetails } = details;
+    const map = indexTree(demo.tree), parent = map.get(parentId);
     if (!canContain(parent, map)) throw new Error('This folder is read-only.');
-    const node = { ...details, id: String(Date.now()) + Math.random().toString(16).slice(2, 6), dateAdded: Date.now() };
+    const node = { ...nodeDetails, parentId, id: String(Date.now()) + Math.random().toString(16).slice(2, 6), dateAdded: Date.now() };
     if (!node.url) node.children = [];
-    parent.children.push(node); saveDemo(); return node;
+    const targetIndex = Number.isInteger(index) ? Math.max(0, Math.min(index, parent.children.length)) : parent.children.length;
+    parent.children.splice(targetIndex, 0, node); saveDemo(); return node;
   },
   async update(id, details) {
     if (isExtension) return chrome.bookmarks.update(id, details);

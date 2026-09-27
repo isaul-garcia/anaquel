@@ -84,6 +84,7 @@ async function fetchIcon(pageUrl, refresh, iconUrl, size) {
     if (candidateSize > bestSize) { best = candidate; bestSize = candidateSize; }
     if (bestSize >= size) break;
   }
+  if (bestSize >= size) return best.dataUrl;
   // Original sources can contain larger raster images, multiple ICO sizes, or SVG.
   // Stop as soon as the requested resolution is met, retaining the sharpest fallback.
   const sources = [...new Set([iconUrl, new URL('/favicon.ico', pageUrl).href].filter(Boolean))];

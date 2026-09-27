@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 let context, page, worker, profile, extensionUrl, sites, ids;
 const errors = [];
-async function openAll() { await page.getByRole('button', { name: 'All Bookmarks', exact: true }).click(); }
+async function openAll() { await page.getByRole('button', { name: /^All Bookmarks, \d+ bookmarks?$/ }).click(); }
 async function site(missing = false) {
   const png = await readFile('icons/icon32.png');
   const fresh = await readFile('icons/icon48.png');
@@ -110,7 +110,14 @@ test('clicking a bookmark refreshes its saved icon after the page visit', async 
   expect(errors).toEqual([]);
 });
 test('cached browser PNGs without MIME headers render without website requests', async () => {
-  const png = (await readFile('icons/icon128.png')).toString('base64');
+  const png = await page.evaluate(async () => {
+    // Use a real site icon that cannot match Brave's generic extension placeholder.
+    const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
+    const context = canvas.getContext('2d'); context.fillStyle = '#e4572e'; context.fillRect(0, 0, 128, 128);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    return btoa(String.fromCharCode(...bytes));
+  });
   const id = await page.evaluate(async () => {
     const root = (await chrome.bookmarks.getTree())[0].children.find(n => !n.unmodifiable);
     return (await chrome.bookmarks.create({ parentId: root.id, title: 'Browser cache only', url: 'https://native-cache.example/' })).id;
@@ -147,19 +154,16 @@ test('old failed lookups retry once after the fix and remain cached afterward', 
   await page.goto(extensionUrl); await openAll();
   await expect(page.locator(`.tile[data-id="${ids[0]}"] .tile-art img`)).toBeVisible();
   expect(sites[0].requests).toBe(requests + 1);
-  expect((await cached(sites[0].url)).cacheVersion).toBe(3);
+  expect((await cached(sites[0].url)).cacheVersion).toBe(4);
   await page.reload(); await openAll();
   await expect(page.locator(`.tile[data-id="${ids[0]}"] .tile-art img`)).toBeVisible();
   expect(sites[0].requests).toBe(requests + 1);
 });
 
-test('favicons do not depend on an available background message receiver', async () => {
+test('favicons do not depend on a response to the legacy background message', async () => {
   await page.goto(extensionUrl); await openAll();
-  const error = await page.evaluate(async () => {
-    try { await chrome.runtime.sendMessage({ type: 'get-bookmark-favicon', id: 'unused' }); }
-    catch (error) { return error.message; }
-  });
-  expect(error).toContain('Receiving end does not exist');
+  const response = await page.evaluate(() => chrome.runtime.sendMessage({ type: 'get-bookmark-favicon', id: 'unused' }));
+  expect(response).toBeUndefined();
   await expect(page.locator(`.tile[data-id="${ids[0]}"] .tile-art img`)).toBeVisible();
   expect(await page.locator('#toast').isVisible()).toBe(false);
 });
@@ -194,8 +198,10 @@ test('Retina lookups prefer a larger original and remember unsuccessful size upg
   }, { small, large });
   expect(result.first.dataUrl).toBe(`data:image/png;base64,${large}`);
   expect(result.second).toEqual(result.first);
-  expect(result.requests).toHaveLength(2);
+  expect(result.requests).toHaveLength(3);
   expect(new URL(result.requests[0]).searchParams.get('size')).toBe('256');
+  expect(new URL(result.requests[1]).searchParams.get('size')).toBe('512');
+  expect(result.requests[2]).toBe('https://sharp.example/favicon.ico');
 });
 
 test('saved grid and preview icons are attached synchronously before insertion', async () => {

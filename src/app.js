@@ -7,7 +7,7 @@ const $ = selector => document.querySelector(selector);
 const state = { root: null, map: new Map(), folderColors: {}, prefs: { pins: {}, theme: 'dark', size: 'comfortable', folderView: 'list', view: 'grid', newTab: true }, current: 'pinned', edit: false, query: '', domainFilter: '', searchMode: 'bookmarks', folderSort: 'manual', type: 'all', sort: 'manual', dragId: null, dragIds: [], busy: false };
 const emojiMeasure = document.createElement('canvas').getContext('2d');
 let batchMode = false, selectedIds = new Set(), deleteIds = [];
-let editorId = null, editorType = 'bookmark', deleteId = null, toastTimer, reloadTimer, dropIndicator;
+let editorId = null, editorType = 'bookmark', deleteId = null, toastTimer, undoTimer, reloadTimer, dropIndicator, undoSnapshot = null;
 let reloadVersion = 0, treeSignature = '', colorSignature = '';
 const demoBrands = {
   'www.are.na': ['✳✳', '#d9dcce', '#252823'], 'notion.so': ['N', '#eeeee6', '#242521'], 'read.cv': ['↗', '#9ebea9', '#24372b'],
@@ -21,7 +21,78 @@ const demoBrands = {
 };
 function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
 function button(className, label, iconName, handler) { const b = el('button', className); b.type = 'button'; b.title = label; b.setAttribute('aria-label', label); b.append(icon(iconName)); if (handler) b.addEventListener('click', handler); return b; }
-function toast(message) { clearTimeout(toastTimer); $('#toast').textContent = message; $('#toast').hidden = false; toastTimer = setTimeout(() => $('#toast').hidden = true, 4500); }
+function dismissUndo(hideToast = false) {
+  clearTimeout(undoTimer); undoSnapshot = null;
+  const button = $('#undo-delete');
+  button.hidden = true; button.disabled = false;
+  if (hideToast) { clearTimeout(toastTimer); $('#toast').hidden = true; }
+}
+function toast(message, duration = 4500, preserveUndo = false) {
+  if (!preserveUndo) dismissUndo();
+  clearTimeout(toastTimer); $('#toast-message').textContent = message; $('#toast').hidden = false;
+  toastTimer = setTimeout(() => $('#toast').hidden = true, duration);
+}
+function snapshotNode(node) {
+  return {
+    id: node.id, title: node.title || '', url: node.url,
+    color: node.url ? null : state.folderColors[node.id],
+    children: (node.children || []).map(snapshotNode)
+  };
+}
+function snapshotDeletion(ids) {
+  return ids.map(id => {
+    const node = state.map.get(id), parent = state.map.get(node?.parentId);
+    return node && parent ? {
+      parentId: node.parentId,
+      index: parent.children.findIndex(child => child.id === node.id),
+      node: snapshotNode(node)
+    } : null;
+  }).filter(Boolean);
+}
+function offerUndo(snapshot) {
+  if (!snapshot.length) return;
+  dismissUndo(); undoSnapshot = snapshot;
+  $('#undo-delete').hidden = false;
+  toast(`Removed. Undo is available for 15 seconds.`, 15000, true);
+  undoTimer = setTimeout(() => dismissUndo(true), 15000);
+}
+async function restoreNode(snapshot, parentId, index, restoredIds, colors) {
+  const details = { parentId, index, title: snapshot.title };
+  if (snapshot.url) details.url = snapshot.url;
+  const restored = await store.create(details);
+  restoredIds.set(snapshot.id, restored.id);
+  if (snapshot.color) colors[restored.id] = snapshot.color;
+  for (const [childIndex, child] of snapshot.children.entries()) {
+    await restoreNode(child, restored.id, childIndex, restoredIds, colors);
+  }
+}
+function remapDeletedIds(restoredIds) {
+  state.prefs.pins = Object.fromEntries(Object.entries(state.prefs.pins || {}).map(([scope, ids]) => [
+    scope, Array.isArray(ids) ? ids.map(id => restoredIds.get(id) || id) : []
+  ]));
+  if (Array.isArray(state.prefs.allOrder)) state.prefs.allOrder = state.prefs.allOrder.map(id => restoredIds.get(id) || id);
+}
+async function undoDeletion() {
+  if (!undoSnapshot || state.busy) return;
+  const snapshot = undoSnapshot;
+  state.busy = true; $('#undo-delete').disabled = true;
+  try {
+    await reload();
+    for (const entry of snapshot) {
+      if (!canContain(state.map.get(entry.parentId), state.map)) throw new Error('The original folder is no longer available.');
+    }
+    const restoredIds = new Map(), colors = {};
+    const ordered = [...snapshot].sort((a, b) => a.parentId.localeCompare(b.parentId) || a.index - b.index);
+    for (const entry of ordered) await restoreNode(entry.node, entry.parentId, entry.index, restoredIds, colors);
+    if (Object.keys(colors).length) await store.saveFolderColors(colors);
+    remapDeletedIds(restoredIds); await savePrefs();
+    dismissUndo(); await reload();
+    toast(`Restored ${snapshot.length === 1 ? 'the deleted item' : `${snapshot.length} deleted items`}.`);
+  } catch (error) {
+    $('#toast-message').textContent = `${error.message || 'Could not restore the deletion.'} Try Undo again.`;
+    $('#undo-delete').disabled = false;
+  } finally { state.busy = false; }
+}
 function domain(url) { try { return new URL(url).hostname.replace(/^www\./, '') || url; } catch { return url; } }
 function itemLabel(node) { return node.title || (node.url ? domain(node.url) : 'Untitled'); }
 function pinnedIds() {
@@ -492,6 +563,7 @@ function askBatchDelete() {
   const nodes = deleteIds.map(id => state.map.get(id));
   const bookmarks = nodes.reduce((count, node) => count + (node.url ? 1 : descendants(node).length), 0);
   $('#delete-error').textContent = '';
+  $('#delete-safety-note').hidden = false;
   $('#delete-title').textContent = `Delete ${deleteIds.length} selected items?`;
   $('#delete-description').textContent = `This permanently deletes ${bookmarks} bookmarks${nodes.some(node => !node.url) ? ' and the selected folders with all their nested contents' : ''} from your browser. Selected: ${nodes.map(node => node.title || 'Untitled').join(', ')}.`;
   $('#delete-dialog').showModal(); $('#delete-dialog .secondary').focus();
@@ -499,6 +571,7 @@ function askBatchDelete() {
 function askDelete(id) {
   const node = state.map.get(id); if (!canEdit(node, state.map)) return;
   deleteIds = [id]; deleteId = id; $('#delete-error').textContent = '';
+  $('#delete-safety-note').hidden = Boolean(node.url);
   $('#delete-title').textContent = node.url ? 'Let this bookmark go?' : 'Remove this folder?';
   const count = descendants(node).length;
   $('#delete-description').textContent = node.url ? `“${node.title}” will be deleted from your browser’s bookmarks.` : `“${node.title}” and everything inside it (${count} bookmarks, including nested folders) will be permanently deleted from your browser.`;
@@ -508,12 +581,13 @@ async function submitDelete(event) {
   event.preventDefault(); if (state.busy) return;
   state.busy = true; $('#confirm-delete').disabled = true;
   try {
+    const deleted = snapshotDeletion(deleteIds);
     for (const id of [...deleteIds]) {
       const node = state.map.get(id);
       if (node && canEdit(node, state.map)) await store.remove(id, !node.url);
       selectedIds.delete(id); deleteIds = deleteIds.filter(value => value !== id);
     }
-    $('#delete-dialog').close(); await reload(); toast('Removed. A little more breathing room.');
+    $('#delete-dialog').close(); await reload(); offerUndo(deleted);
   } catch (error) { $('#delete-error').textContent = error.message; }
   finally { state.busy = false; $('#confirm-delete').disabled = false; }
 }
@@ -746,6 +820,7 @@ function bindEvents() {
   $('#sort-filter').addEventListener('change', event => { state.sort = event.target.value; renderGrid(); });
   $('#reset-filters').addEventListener('click', () => { state.type = 'all'; state.sort = 'manual'; $('#type-filter').value = 'all'; $('#sort-filter').value = 'manual'; renderGrid(); });
   $('#editor-form').addEventListener('submit', submitEditor); $('#delete-form').addEventListener('submit', submitDelete);
+  $('#undo-delete').addEventListener('click', undoDeletion);
   $('#editor-delete').addEventListener('click', () => {
     if (!editorId || state.busy) return;
     const id = editorId;
@@ -795,6 +870,9 @@ function bindEvents() {
   });
   document.addEventListener('keydown', event => {
     if ($('dialog[open]') || /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+    if (!event.shiftKey && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z' && undoSnapshot) {
+      event.preventDefault(); undoDeletion(); return;
+    }
     if (event.key === '/') { event.preventDefault(); $('#search').focus(); }
     if (event.key === 'Escape' && selectedIds.size) { cancelSelection(); return; }
     if (event.key === 'Escape' && state.edit) { state.edit = false; render(); }

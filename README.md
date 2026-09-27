@@ -2,6 +2,14 @@
 
 A visual bookmark manager for Brave and Chrome, based on the supplied two-column design. Native Manifest V3 extension; no build step, accounts, backend, or runtime dependencies.
 
+## Privacy
+
+Anaquel is local-first: it has no accounts, analytics, advertising, or developer-operated server. It accesses bookmarks to provide bookmark management and makes direct, cookie-free favicon requests only when needed to display bookmark icons. See the full [Privacy Policy](PRIVACY.md).
+
+## Safety and backups
+
+Anaquel changes your browser’s actual bookmarks. Deleting a bookmark or folder is permanent in Anaquel, and deleting a folder removes its nested contents. Before a major cleanup, export a backup in Chrome: **More** → **Bookmarks and lists** → **Bookmark Manager** → **More** → **Export Bookmarks**. Chrome saves the backup as an HTML file, which you can later import. See Google’s [bookmark export and import instructions](https://support.google.com/chrome/answer/96816?hl=en).
+
 ## Load in Brave
 
 1. Open `brave://extensions`.

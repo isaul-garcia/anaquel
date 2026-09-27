@@ -187,6 +187,12 @@ test('edit mode deletes bookmarks after confirmation', async () => {
   await page.locator('#confirm-delete').click();
   await expect(page.locator(`.tile[data-id="${bookmarkIds[1]}"]`)).toHaveCount(0);
   expect(await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Bravo' })).length)).toBe(0);
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeVisible();
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+z' : 'Control+z');
+  await expect.poll(async () => (await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Bravo' })).length))).toBe(1);
+  const restoredId = await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Bravo' }))[0].id);
+  await page.evaluate(async id => chrome.bookmarks.remove(id), restoredId);
+  await expect.poll(async () => (await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Bravo' })).length))).toBe(0);
   await page.locator('#done').click();
 });
 test('creates a main folder and a nested folder, then deletes their tree', async () => {
@@ -198,9 +204,15 @@ test('creates a main folder and a nested folder, then deletes their tree', async
   await expect(page.locator('#grid')).toContainText('Inside');
   await page.getByRole('button', { name: 'Organize bookmarks', exact: true }).click();
   await page.getByRole('button', { name: 'Delete Temporary collection', exact: true }).click();
+  await expect(page.locator('#delete-safety-note')).toBeVisible();
+  await expect(page.locator('#delete-safety-note a')).toHaveAttribute('href', 'https://support.google.com/chrome/answer/96816?hl=en');
   await page.locator('#confirm-delete').click();
-  await expect(page.locator('#breadcrumbs')).toHaveText('All Bookmarks');
-  expect(await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Inside' })).length)).toBe(0);
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(async () => (await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Inside' })).length))).toBe(1);
+  const temporary = await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Temporary collection' }))[0]);
+  await page.evaluate(async id => chrome.bookmarks.removeTree(id), temporary.id);
+  await expect.poll(async () => (await page.evaluate(async () => (await chrome.bookmarks.search({ title: 'Inside' })).length))).toBe(0);
   await page.locator('#done').click();
 });
 test('settings persist and narrow screens avoid horizontal overflow', async () => {
@@ -270,7 +282,7 @@ test('folder creation and editing save chosen colors across rename and move', as
   await page.locator('#item-parent').selectOption(folderId);
   await page.locator('#save-item').click();
   await page.locator('#done').click();
-  await page.reload(); await page.getByRole('button', { name: 'All Bookmarks', exact: true }).click();
+  await page.reload(); await page.locator(`.collection[data-id="${folderId}"] .collection-open`).click();
   const initial = page.locator(`.tile[data-id="${node.id}"] .folder-initial`);
   await expect(initial).toHaveText('R');
   expect(await initial.evaluate(n => n.style.getPropertyValue('--folder-initial-color'))).toBe('#ff3300');
@@ -301,7 +313,7 @@ test('browser root folder colors can change without editing native root properti
 
 test('batch edit selects visible bookmarks and confirms deletion', async () => {
   await page.goto(extensionUrl);
-  await page.getByRole('button', { name: 'All Bookmarks', exact: true }).click();
+  await page.getByRole('button', { name: /^All Bookmarks, \d+ bookmarks?$/ }).click();
   const ids = await page.evaluate(async () => {
     const root = (await chrome.bookmarks.getTree())[0].children.find(n => !n.unmodifiable);
     const result = [];
@@ -313,7 +325,6 @@ test('batch edit selects visible bookmarks and confirms deletion', async () => {
   await page.locator('#edit-mode').click();
   await expect(page.locator('#grid .pin-button').first()).toBeHidden();
   await expect(page.locator('#grid .more-button').first()).toBeHidden();
-  await page.locator('#batch-toggle').check();
   await page.locator('#select-visible').click();
   await expect(page.locator('#delete-selected')).toHaveText('Delete selected (2)');
   await page.locator('#delete-selected').click();
@@ -330,27 +341,31 @@ test('batch edit selects visible bookmarks and confirms deletion', async () => {
 
 test('Shift-selected bookmarks and folders drag together', async () => {
   await page.goto(extensionUrl);
+  const bookmarkGroup = await page.evaluate(async parentId => {
+    const first = await chrome.bookmarks.create({ parentId, title: 'Group drag first bookmark', url: 'https://group-first.example/' });
+    const second = await chrome.bookmarks.create({ parentId, title: 'Group drag second bookmark', url: 'https://group-second.example/' });
+    return { first: first.id, second: second.id };
+  }, folderId);
+  await page.reload();
   await page.locator(`.collection[data-id="${folderId}"] .collection-open`).click();
-  const alpha = page.locator(`.tile[data-id="${bookmarkIds[0]}"] .tile-main`);
-  const bravo = page.locator(`.tile[data-id="${bookmarkIds[1]}"] .tile-main`);
-  await alpha.click({ modifiers: ['Shift'] });
-  await bravo.click({ modifiers: ['Shift'] });
-  await expect(page.locator(`.tile[data-id="${bookmarkIds[0]}"]`)).toHaveClass(/batch-selected/);
-  await expect(page.locator(`.tile[data-id="${bookmarkIds[1]}"]`)).toHaveClass(/batch-selected/);
-  await page.locator(`.tile[data-id="${bookmarkIds[0]}"]`).dragTo(page.locator(`.tile[data-id="${nestedId}"]`));
-  await expect.poll(() => page.evaluate(async ids => (await chrome.bookmarks.get(ids)).map(node => node.parentId), [bookmarkIds[0], bookmarkIds[1]])).toEqual([nestedId, nestedId]);
-  const ids = await page.evaluate(async () => {
+  await page.locator(`.tile[data-id="${bookmarkGroup.first}"] .tile-main`).click({ modifiers: ['Shift'] });
+  await page.locator(`.tile[data-id="${bookmarkGroup.second}"] .tile-main`).click({ modifiers: ['Shift'] });
+  await expect(page.locator(`.tile[data-id="${bookmarkGroup.first}"]`)).toHaveClass(/batch-selected/);
+  await expect(page.locator(`.tile[data-id="${bookmarkGroup.second}"]`)).toHaveClass(/batch-selected/);
+  await page.locator(`.tile[data-id="${bookmarkGroup.first}"]`).dragTo(page.locator(`.tile[data-id="${nestedId}"]`));
+  await expect.poll(() => page.evaluate(async ids => (await chrome.bookmarks.get([ids.first, ids.second])).map(node => node.parentId), bookmarkGroup)).toEqual([nestedId, nestedId]);
+  const folderGroup = await page.evaluate(async () => {
     const root = (await chrome.bookmarks.getTree())[0].children.find(node => !node.unmodifiable);
     const target = await chrome.bookmarks.create({ parentId: root.id, title: 'Group drop target' });
     const first = await chrome.bookmarks.create({ parentId: root.id, title: 'Group drop first' });
     const second = await chrome.bookmarks.create({ parentId: root.id, title: 'Group drop second' });
     return { target: target.id, first: first.id, second: second.id };
   });
-  await expect(page.locator(`.collection[data-id="${ids.target}"]`)).toBeVisible();
-  await page.locator(`.collection[data-id="${ids.first}"] .collection-open`).click({ modifiers: ['Shift'] });
-  await page.locator(`.collection[data-id="${ids.second}"] .collection-open`).click({ modifiers: ['Shift'] });
-  await expect(page.locator(`.collection[data-id="${ids.first}"]`)).toHaveClass(/batch-selected/);
-  await expect(page.locator(`.collection[data-id="${ids.second}"]`)).toHaveClass(/batch-selected/);
-  await page.locator(`.collection[data-id="${ids.first}"]`).dragTo(page.locator(`.collection[data-id="${ids.target}"]`));
-  await expect.poll(() => page.evaluate(async values => (await chrome.bookmarks.get([values.first, values.second])).map(node => node.parentId), ids)).toEqual([ids.target, ids.target]);
+  await expect(page.locator(`.collection[data-id="${folderGroup.target}"]`)).toBeVisible();
+  await page.locator(`.collection[data-id="${folderGroup.first}"] .collection-open`).click({ modifiers: ['Shift'] });
+  await page.locator(`.collection[data-id="${folderGroup.second}"] .collection-open`).click({ modifiers: ['Shift'] });
+  await expect(page.locator(`.collection[data-id="${folderGroup.first}"]`)).toHaveClass(/batch-selected/);
+  await expect(page.locator(`.collection[data-id="${folderGroup.second}"]`)).toHaveClass(/batch-selected/);
+  await page.locator(`.collection[data-id="${folderGroup.first}"]`).dragTo(page.locator(`.collection[data-id="${folderGroup.target}"]`));
+  await expect.poll(() => page.evaluate(async values => (await chrome.bookmarks.get([values.first, values.second])).map(node => node.parentId), folderGroup)).toEqual([folderGroup.target, folderGroup.target]);
 });
